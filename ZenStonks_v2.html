@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Zen Stonks</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+
+body {
+  background: #008080; /* classic Win3.1 teal desktop */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+/* ── WINDOWS 3.1 CHROME ── */
+#win-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 620px;
+  border: 2px solid #fff;
+  border-right-color: #000;
+  border-bottom-color: #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #fff;
+  background: #c0c0c0;
+}
+
+/* Title bar */
+#title-bar {
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20px;
+}
+#title-bar .win-controls {
+  display: flex;
+  gap: 2px;
+}
+#title-bar .win-btn {
+  width: 16px;
+  height: 14px;
+  background: #c0c0c0;
+  border: 1px solid #fff;
+  border-right-color: #000;
+  border-bottom-color: #000;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #000;
+  font-weight: bold;
+  line-height: 1;
+}
+#title-bar .title-icon { font-size: 11px; margin-right: 4px; }
+
+/* Menu bar */
+#menu-bar {
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  padding: 2px 6px;
+  display: flex;
+  gap: 12px;
+  height: 20px;
+  align-items: center;
+}
+#menu-bar span {
+  font-size: 12px;
+  cursor: pointer;
+  padding: 1px 4px;
+}
+#menu-bar span:hover { background: #000080; color: #fff; }
+#menu-bar span u { text-decoration: underline; }
+
+/* Game canvas area */
+#canvas-wrap {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  height: 340px;
+}
+#game-canvas {
+  display: block;
+  cursor: none;
+}
+
+/* Status bar */
+#status-bar {
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-top-color: #808080;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 4px;
+  gap: 4px;
+}
+.status-panel {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+  padding: 2px 8px;
+  font-size: 12px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+#status-level { min-width: 160px; font-weight: bold; }
+#status-stonks { min-width: 120px; }
+#status-lives  { min-width: 70px; }
+#status-score  { min-width: 70px; }
+
+/* ── OVERLAYS (inside canvas-wrap) ── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  text-align: center;
+}
+.overlay.show { display: flex; }
+
+/* Win3.1 dialog box style */
+.dialog {
+  background: #c0c0c0;
+  border: 2px solid #fff;
+  border-right-color: #000;
+  border-bottom-color: #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #fff;
+  padding: 0;
+  min-width: 300px;
+  max-width: 420px;
+}
+.dialog-title {
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 8px;
+  text-align: left;
+}
+.dialog-body {
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #000;
+  text-align: left;
+}
+.dialog-body .big { font-size: 32px; text-align: center; display: block; margin-bottom: 8px; }
+.dialog-footer {
+  padding: 8px 20px 14px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.win-action-btn {
+  background: #c0c0c0;
+  border: 2px solid #fff;
+  border-right-color: #000;
+  border-bottom-color: #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #fff;
+  padding: 4px 20px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+}
+.win-action-btn:active {
+  border-color: #000;
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+}
+.win-action-btn.primary { font-weight: bold; }
+
+/* Title screen styles */
+#overlay-title .dialog-body { text-align: center; }
+.title-logo {
+  font-size: 28px;
+  font-weight: bold;
+  color: #000080;
+  font-family: Arial, sans-serif;
+  letter-spacing: 2px;
+}
+.title-sub {
+  font-size: 13px;
+  color: #000;
+  margin: 4px 0 12px;
+  font-style: italic;
+}
+.level-select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+  text-align: left;
+}
+.level-btn {
+  background: #c0c0c0;
+  border: 2px solid #fff;
+  border-right-color: #000;
+  border-bottom-color: #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #fff;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.level-btn:disabled { color: #808080; cursor: not-allowed; }
+.level-btn:not(:disabled):hover { background: #000080; color: #fff; }
+.level-btn .lock { font-size: 11px; }
+.level-btn .new-mechanic { font-size: 10px; color: #800000; }
+.level-btn:not(:disabled) .new-mechanic { color: #800000; }
+.level-btn:hover .new-mechanic { color: #ffaaaa; }
+</style>
+</head>
+<body>
+
+<div id="win-wrapper">
+  <!-- Title bar -->
+  <div id="title-bar">
+    <div style="display:flex;align-items:center">
+      <span class="title-icon">📈</span>
+      <span id="title-text">Zen Stonks</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn">▼</div>
+      <div class="win-btn" style="font-size:7px;">▲▼</div>
+      <div class="win-btn" onclick="quitToTitle()">✕</div>
+    </div>
+  </div>
+
+  <!-- Menu bar -->
+  <div id="menu-bar">
+    <span><u>G</u>ame</span>
+    <span><u>H</u>elp</span>
+    <span id="menu-codex" onclick="showCodex()" style="font-size:11px;">📖 Scam Codex</span>
+  </div>
+
+  <!-- Canvas -->
+  <div id="canvas-wrap">
+    <canvas id="game-canvas" width="620" height="340"></canvas>
+
+    <!-- TITLE OVERLAY -->
+    <div class="overlay show" id="overlay-title">
+      <div class="dialog">
+        <div class="dialog-title">📈 Zen Stonks — Select Level</div>
+        <div class="dialog-body">
+          <div class="title-logo">ZEN STONKS</div>
+          <div class="title-sub">— Hang In There —</div>
+          <div style="font-size:12px;margin-bottom:10px;color:#000">
+            Navigate the market. Collect 📊 stonks. Avoid the scammers.<br>
+            Rescue DFV's cat 🐱 — it's still hanging in there.
+          </div>
+          <div class="level-select" id="level-select-list"></div>
+        </div>
+        <div class="dialog-footer">
+          <button class="win-action-btn primary" onclick="startSelectedLevel()">▶ Play</button>
+          <button class="win-action-btn" onclick="showCodex()">📖 Codex</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEATH OVERLAY -->
+    <div class="overlay" id="overlay-death">
+      <div class="dialog">
+        <div class="dialog-title">💀 Conviction Lost</div>
+        <div class="dialog-body">
+          <span class="big" id="death-emoji">📉</span>
+          <strong id="death-title">REKT</strong><br>
+          <span id="death-msg">You got rekt.</span>
+        </div>
+        <div class="dialog-footer">
+          <button class="win-action-btn primary" onclick="restartLevel()">↺ Retry</button>
+          <button class="win-action-btn" onclick="quitToTitle()">Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEVEL WIN OVERLAY -->
+    <div class="overlay" id="overlay-levelwin">
+      <div class="dialog">
+        <div class="dialog-title">💎 Level Complete</div>
+        <div class="dialog-body">
+          <span class="big">📊✅</span>
+          <strong>Stonks secured!</strong><br>
+          <span id="levelwin-msg">The cat still hangs in there...</span><br>
+          <span id="levelwin-score" style="font-size:11px;color:#000080;"></span>
+        </div>
+        <div class="dialog-footer">
+          <button class="win-action-btn primary" id="btn-next-level" onclick="nextLevel()">▶ Next Level</button>
+          <button class="win-action-btn" onclick="quitToTitle()">Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME WIN OVERLAY -->
+    <div class="overlay" id="overlay-win">
+      <div class="dialog">
+        <div class="dialog-title">🐱 HANG IN THERE.</div>
+        <div class="dialog-body" style="text-align:center">
+          <span class="big">🐱</span>
+          <strong style="font-size:16px;color:#000080;">HANG IN THERE.</strong><br><br>
+          DFV's cat has been rescued.<br>
+          The thesis was always sound.<br><br>
+          <span style="font-size:20px;">📈💎🦍🐱</span><br><br>
+          <span id="win-score" style="color:#000080;font-weight:bold;"></span>
+        </div>
+        <div class="dialog-footer">
+          <button class="win-action-btn primary" onclick="quitToTitle()">Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODEX OVERLAY -->
+    <div class="overlay" id="overlay-codex">
+      <div class="dialog" style="min-width:420px;max-width:560px;max-height:320px;overflow:hidden;">
+        <div class="dialog-title">📖 The Scam Codex — Know Your Enemies</div>
+        <div class="dialog-body" style="padding:8px 12px;overflow-y:auto;max-height:240px;font-size:11px;">
+          <div id="codex-content"></div>
+        </div>
+        <div class="dialog-footer">
+          <button class="win-action-btn primary" onclick="hideCodex()">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /canvas-wrap -->
+
+  <!-- Status bar -->
+  <div id="status-bar">
+    <div class="status-panel" id="status-level">Zen Stonks</div>
+    <div class="status-panel" id="status-stonks">📊 0 / 0</div>
+    <div class="status-panel" id="status-lives">❤️ 3</div>
+    <div class="status-panel" id="status-score">0</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════
+//  ZEN STONKS — True Jewel Thief Clone
+//  Free-roaming, mouse-controlled, Windows 3.1 aesthetic
+//  Enemy: one emoji each. Collectible: 📊 (stonk bar chart)
+//  Sequential level unlock: only unlocked by beating previous
+// ═══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('game-canvas');
+const ctx    = canvas.getContext('2d');
+const W = canvas.width;   // 620
+const H = canvas.height;  // 340
+
+// ── GAME CONFIG ────────────────────────────────────────────────
+const PLAYER_R   = 14;   // player radius
+const PLAYER_SPD = 3.2;  // how fast player chases mouse
+const ENEMY_R    = 13;
+const STONK_R    = 10;
+const COLLECT_DIST = PLAYER_R + STONK_R + 2;
+const KILL_DIST    = PLAYER_R + ENEMY_R - 4;
+
+// ── ENEMY CATALOG ──────────────────────────────────────────────
+const ENEMY_TYPES = {
+  PUMP_DUMP: {
+    emoji: '📈', name: 'Pump & Dump',
+    color: '#ff6b35', speed: 1.4,
+    behavior: 'oscillate',   // patrol, speed-spikes randomly
+    deathMsg: 'You bought the top. Classic.',
+  },
+  PONZI: {
+    emoji: '🔺', name: 'Ponzi Scheme',
+    color: '#9b59b6', speed: 0.9,
+    behavior: 'expand',      // slow, path gets longer over time
+    deathMsg: 'The pyramid collapsed with you inside.',
+  },
+  AFFINITY: {
+    emoji: '🤝', name: 'Affinity Fraud',
+    color: '#27ae60', speed: 1.1,
+    behavior: 'mimic',       // green = looks safe; moves toward stonks
+    deathMsg: 'You trusted the wrong community leader.',
+  },
+  PIG: {
+    emoji: '🐖', name: 'Pig Butchering',
+    color: '#e91e8c', speed: 0.75,
+    behavior: 'slow_chase',  // always drifts toward player
+    deathMsg: 'Love-bombed and liquidated.',
+  },
+  BOILER: {
+    emoji: '📞', name: 'Boiler Room',
+    color: '#e74c3c', speed: 1.6,
+    behavior: 'patrol',      // fast bouncer, damages by proximity aura
+    deathMsg: '"Limited time offer." RIP.',
+    aura: 40,                // danger aura radius
+  },
+  RECOVERY: {
+    emoji: '🛟', name: 'Recovery Room',
+    color: '#3498db', speed: 1.0,
+    behavior: 'follow',      // chases player after player takes damage
+    deathMsg: '"We can get your money back." They lied.',
+  },
+  UNSUITABLE: {
+    emoji: '📊', name: 'Bad Reco',  // note: use bar-chart not stonk bar
+    color: '#f39c12', speed: 1.3,
+    behavior: 'patrol',
+    deathMsg: 'The broker said this was suitable for you.',
+    inverts: true,           // inverts mouse control on near-miss
+  },
+};
+
+// ── LEVEL CATALOG ──────────────────────────────────────────────
+// Background themes painted procedurally per level.
+// Enemies: type, patrol waypoints (normalized 0-1), speed multiplier.
+const LEVELS = [
+  {
+    id: 0,
+    name: 'The Retail Terminal',
+    subtitle: 'First login. Fresh account.',
+    theme: 'office',
+    stonksNeeded: 7,
+    stonksTotal: 10,
+    newMechanic: 'PUMP_DUMP',
+    enemies: [
+      { type:'PUMP_DUMP', wx:[0.2,0.8], wy:[0.3,0.3], spd:1.0 },
+      { type:'PUMP_DUMP', wx:[0.5,0.5], wy:[0.2,0.75], spd:0.9 },
+    ],
+  },
+  {
+    id: 1,
+    name: 'Market Street South',
+    subtitle: 'The floor is live. The honeypots are real.',
+    theme: 'wallst',
+    stonksNeeded: 8,
+    stonksTotal: 12,
+    newMechanic: 'PONZI',
+    enemies: [
+      { type:'PUMP_DUMP', wx:[0.1,0.9], wy:[0.4,0.4], spd:1.1 },
+      { type:'PONZI',     wx:[0.3,0.7,0.7,0.3], wy:[0.2,0.2,0.7,0.7], spd:1.0 },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Data Floor Alpha',
+    subtitle: 'Bloomberg terminals. Affinity scammers in every DM.',
+    theme: 'bloomberg',
+    stonksNeeded: 9,
+    stonksTotal: 13,
+    newMechanic: 'AFFINITY',
+    enemies: [
+      { type:'AFFINITY',  wx:[0.2,0.8,0.5], wy:[0.3,0.6,0.15], spd:1.0 },
+      { type:'PUMP_DUMP', wx:[0.15,0.85], wy:[0.5,0.5], spd:1.2 },
+      { type:'PONZI',     wx:[0.5,0.8,0.5,0.2], wy:[0.2,0.5,0.8,0.5], spd:0.8 },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Suburban Latency Node',
+    subtitle: 'WSB in 14 tabs. Someone in DMs is too friendly.',
+    theme: 'basement',
+    stonksNeeded: 9,
+    stonksTotal: 14,
+    newMechanic: 'PIG',
+    enemies: [
+      { type:'PIG',       wx:[0.5,0.5], wy:[0.5,0.5], spd:1.0 },
+      { type:'AFFINITY',  wx:[0.1,0.9,0.5], wy:[0.2,0.8,0.5], spd:1.1 },
+      { type:'PUMP_DUMP', wx:[0.2,0.8], wy:[0.7,0.3], spd:1.3 },
+    ],
+  },
+  {
+    id: 4,
+    name: 'Prime Brokerage Annex',
+    subtitle: '"Robbinghood" disabled the buy button.',
+    theme: 'brokerage',
+    stonksNeeded: 10,
+    stonksTotal: 15,
+    newMechanic: 'BOILER',
+    enemies: [
+      { type:'BOILER',    wx:[0.3,0.7], wy:[0.4,0.4], spd:1.2 },
+      { type:'PIG',       wx:[0.1,0.9,0.5], wy:[0.8,0.8,0.2], spd:0.9 },
+      { type:'AFFINITY',  wx:[0.5,0.9,0.5,0.1], wy:[0.1,0.5,0.9,0.5], spd:1.0 },
+      { type:'PUMP_DUMP', wx:[0.2,0.8], wy:[0.2,0.8], spd:1.4 },
+    ],
+  },
+  {
+    id: 5,
+    name: 'Clearing House Depths',
+    subtitle: 'T+2 settlement hell. Recovery room scammers lurk.',
+    theme: 'clearinghouse',
+    stonksNeeded: 11,
+    stonksTotal: 16,
+    newMechanic: 'RECOVERY',
+    enemies: [
+      { type:'RECOVERY',  wx:[0.5,0.2,0.8], wy:[0.5,0.3,0.7], spd:1.0 },
+      { type:'BOILER',    wx:[0.1,0.9], wy:[0.5,0.5], spd:1.3 },
+      { type:'PONZI',     wx:[0.2,0.8,0.8,0.2], wy:[0.2,0.2,0.8,0.8], spd:1.0 },
+      { type:'PIG',       wx:[0.5,0.5], wy:[0.1,0.9], spd:0.8 },
+    ],
+  },
+  {
+    id: 6,
+    name: 'Synthetic Liquidity Lab',
+    subtitle: 'Naked shorts. Phantom shares. Controls may invert.',
+    theme: 'lab',
+    stonksNeeded: 11,
+    stonksTotal: 17,
+    newMechanic: 'UNSUITABLE',
+    enemies: [
+      { type:'UNSUITABLE', wx:[0.2,0.8,0.5], wy:[0.2,0.8,0.5], spd:1.2 },
+      { type:'RECOVERY',   wx:[0.1,0.9,0.5], wy:[0.5,0.5,0.1], spd:1.1 },
+      { type:'BOILER',     wx:[0.4,0.6], wy:[0.3,0.7], spd:1.4 },
+      { type:'PIG',        wx:[0.9,0.1,0.9], wy:[0.1,0.5,0.9], spd:0.9 },
+      { type:'AFFINITY',   wx:[0.5,0.1,0.9], wy:[0.9,0.5,0.5], spd:1.0 },
+    ],
+  },
+  {
+    id: 7,
+    name: 'THE MARGIN CALL',
+    subtitle: 'Jan 28, 2021. All systems hostile. Rescue the cat.',
+    theme: 'margincall',
+    stonksNeeded: 12,
+    stonksTotal: 18,
+    newMechanic: null,
+    isFinal: true,
+    enemies: [
+      { type:'PUMP_DUMP',  wx:[0.1,0.9], wy:[0.3,0.3], spd:1.5 },
+      { type:'PONZI',      wx:[0.2,0.8,0.8,0.2], wy:[0.2,0.2,0.8,0.8], spd:1.1 },
+      { type:'PIG',        wx:[0.5,0.5], wy:[0.15,0.85], spd:1.0 },
+      { type:'BOILER',     wx:[0.25,0.75], wy:[0.5,0.5], spd:1.4 },
+      { type:'UNSUITABLE', wx:[0.5,0.1,0.9], wy:[0.5,0.9,0.1], spd:1.3 },
+      { type:'RECOVERY',   wx:[0.3,0.7,0.5], wy:[0.7,0.3,0.5], spd:1.2 },
+      { type:'AFFINITY',   wx:[0.9,0.1,0.5], wy:[0.5,0.5,0.9], spd:1.1 },
+    ],
+  },
+];
+
+const CODEX = [
+  { emoji:'📈', name:'Pump & Dump',     mech:'Oscillating patrol, speed spikes',      lore:'Hype cycle patrol. Fast during pump, random during dump. GME: chatroom coordination manufacturing erratic intraday swings.' },
+  { emoji:'🔺', name:'Ponzi Scheme',    mech:'Expanding patrol route over time',      lore:'Starts small, claims more territory each loop. GME: layered synthetic shorts requiring constant new capital to sustain.' },
+  { emoji:'🤝', name:'Affinity Fraud',  mech:'Green-colored, moves toward stonks',    lore:'Disguised as safe (green). Moves toward your collectibles. GME: embedded bad actors posting fake DD in retail communities.' },
+  { emoji:'🐖', name:'Pig Butchering',  mech:'Slow constant drift toward player',     lore:'Slowest enemy, always drifts toward you. Never stops. GME: DM campaigns building false trust over weeks for one devastating loss.' },
+  { emoji:'📞', name:'Boiler Room',     mech:'Fast patrol, damage aura radius',       lore:'Fastest enemy + danger zone around it. You can die without contact. GME: "dangerous retail investor" media pressure campaigns.' },
+  { emoji:'🛟', name:'Recovery Room',   mech:'Activates when player is damaged',      lore:'Appears helpful (blue). Activates aggressively after you take damage. GME: post-halt "we can recover your losses" scam ops.' },
+  { emoji:'📉', name:'Bad Reco',        mech:'Near-miss temporarily inverts mouse',   lore:'Passing near it scrambles your controls briefly. GME: dark pool routing, auto-liquidations, margin calls at max disadvantage.' },
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let G = null;          // game state
+let raf = null;
+let lastTime = 0;
+let selectedLevel = 0;
+let highestUnlocked = 0;  // sequential unlock — only advances when level beaten
+let mouseX = W/2, mouseY = H/2;
+let invertTimer = 0;      // frames remaining of inverted mouse
+
+// Track if canvas has mouse
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  mouseX = e.clientX - r.left;
+  mouseY = e.clientY - r.top;
+});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  mouseX = e.touches[0].clientX - r.left;
+  mouseY = e.touches[0].clientY - r.top;
+}, { passive: false });
+
+// ── INIT ──────────────────────────────────────────────────────
+function initState(levelIdx) {
+  const lvl = LEVELS[levelIdx];
+
+  // Scatter stonks randomly (avoiding walls / edges)
+  const stonks = [];
+  while (stonks.length < lvl.stonksTotal) {
+    const sx = 30 + Math.random() * (W - 60);
+    const sy = 30 + Math.random() * (H - 60);
+    // avoid overlap
+    if (stonks.every(s => Math.hypot(s.x-sx,s.y-sy) > 30)) {
+      stonks.push({ x:sx, y:sy, collected:false });
+    }
+  }
+
+  // Build enemies from level def
+  const enemies = lvl.enemies.map((edef, i) => {
+    const def  = ENEMY_TYPES[edef.type];
+    const wpts = edef.wx.map((wx, j) => ({ x: wx*W, y: edef.wy[j]*H }));
+    return {
+      id: i,
+      type: edef.type,
+      def,
+      x: wpts[0].x,
+      y: wpts[0].y,
+      waypoints: wpts,
+      wpIdx: 0,
+      spd: def.speed * (edef.spd || 1),
+      // pig drift target
+      driftAngle: Math.random() * Math.PI * 2,
+      // oscillation
+      oscTimer: 0,
+      spdMult: 1,
+      // expansion
+      expandTimer: 0,
+    };
+  });
+
+  // cat position (final level only) — center of field
+  const catPos = lvl.isFinal ? { x: W/2, y: H/2 - 20 } : null;
+
+  return {
+    levelIdx,
+    lvl,
+    stonks,
+    stonksCollected: 0,
+    enemies,
+    catPos,
+    catRescued: false,
+    px: 30,
+    py: H/2,
+    lives: 3,
+    score: 0,
+    phase: 'playing',   // playing | dead | levelwin | win
+    invincible: 0,      // invincibility frames after hit
+    flashTimer: 0,
+    ticker: 0,
+  };
+}
+
+// ── GAME LOOP ─────────────────────────────────────────────────
+function startGame(levelIdx) {
+  if (raf) cancelAnimationFrame(raf);
+  G = initState(levelIdx);
+  updateHUD();
+  hideAllOverlays();
+  lastTime = performance.now();
+  raf = requestAnimationFrame(loop);
+}
+
+function loop(ts) {
+  const dt = Math.min((ts - lastTime) / 16.67, 3); // delta in frames, capped
+  lastTime = ts;
+  if (G && G.phase === 'playing') {
+    update(dt);
+    render();
+    updateHUD();
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+// ── UPDATE ────────────────────────────────────────────────────
+function update(dt) {
+  G.ticker += dt;
+
+  // ── Move player toward mouse ──
+  let tx = mouseX, ty = mouseY;
+  // inverted controls (UNSUITABLE near-miss)
+  if (invertTimer > 0) {
+    invertTimer -= dt;
+    // mirror mouse around player position
+    tx = G.px - (mouseX - G.px);
+    ty = G.py - (mouseY - G.py);
+  }
+  const pdx = tx - G.px, pdy = ty - G.py;
+  const pdist = Math.hypot(pdx, pdy);
+  if (pdist > 2) {
+    const move = Math.min(PLAYER_SPD * dt, pdist);
+    G.px += (pdx / pdist) * move;
+    G.py += (pdy / pdist) * move;
+  }
+  // clamp player to canvas
+  G.px = Math.max(PLAYER_R, Math.min(W - PLAYER_R, G.px));
+  G.py = Math.max(PLAYER_R, Math.min(H - PLAYER_R, G.py));
+
+  // ── Move enemies ──
+  G.enemies.forEach(e => moveEnemy(e, dt));
+
+  // ── Collect stonks ──
+  G.stonks.forEach(s => {
+    if (!s.collected && Math.hypot(s.x - G.px, s.y - G.py) < COLLECT_DIST) {
+      s.collected = true;
+      G.stonksCollected++;
+      G.score += 100;
+    }
+  });
+
+  // ── Check exit condition ──
+  const lvl = G.lvl;
+  if (!lvl.isFinal && G.stonksCollected >= lvl.stonksNeeded) {
+    winLevel();
+    return;
+  }
+  // Final level: collect needed stonks THEN walk to cat
+  if (lvl.isFinal && G.catPos && G.stonksCollected >= lvl.stonksNeeded) {
+    const cdist = Math.hypot(G.catPos.x - G.px, G.catPos.y - G.py);
+    if (cdist < PLAYER_R + 18) {
+      G.phase = 'win';
+      showWin();
+      return;
+    }
+  }
+
+  // ── Enemy collision ──
+  if (G.invincible > 0) {
+    G.invincible -= dt;
+    G.flashTimer += dt;
+  } else {
+    G.flashTimer = 0;
+    G.enemies.forEach(e => {
+      const def = e.def;
+      let hitDist = KILL_DIST;
+      // boiler room aura
+      if (e.type === 'BOILER' && def.aura) {
+        hitDist = def.aura;
+      }
+      const dist = Math.hypot(e.x - G.px, e.y - G.py);
+      if (dist < hitDist) {
+        // UNSUITABLE: near-miss check (slightly outside kill zone)
+        if (e.type === 'UNSUITABLE' && dist < hitDist * 1.8 && dist > hitDist) {
+          if (invertTimer <= 0) {
+            invertTimer = 90; // ~1.5s
+          }
+        } else if (dist < hitDist) {
+          takeDamage(e);
+        }
+      }
+    });
+  }
+}
+
+function moveEnemy(e, dt) {
+  const def = e.def;
+  const wpts = e.waypoints;
+
+  // PUMP_DUMP: oscillate with speed spikes
+  if (e.type === 'PUMP_DUMP') {
+    e.oscTimer += dt;
+    if (e.oscTimer > 180 + Math.random() * 60) {
+      e.oscTimer = 0;
+      e.spdMult = e.spdMult === 1 ? 2.5 : 1;
+    }
+  }
+
+  // PIG: slow drift toward player
+  if (e.type === 'PIG') {
+    const dx = G.px - e.x, dy = G.py - e.y;
+    const d = Math.hypot(dx, dy);
+    if (d > 1) {
+      e.x += (dx / d) * e.spd * 0.4 * dt;
+      e.y += (dy / d) * e.spd * 0.4 * dt;
+    }
+    return;
+  }
+
+  // RECOVERY: after player takes hit, chase aggressively
+  if (e.type === 'RECOVERY') {
+    if (G.invincible > 0) {
+      const dx = G.px - e.x, dy = G.py - e.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 1) {
+        e.x += (dx / d) * e.spd * 1.8 * dt;
+        e.y += (dy / d) * e.spd * 1.8 * dt;
+      }
+      return;
+    }
+  }
+
+  // AFFINITY: patrol but drifts toward nearest uncollected stonk
+  if (e.type === 'AFFINITY') {
+    const uncollected = G.stonks.filter(s => !s.collected);
+    if (uncollected.length) {
+      const target = uncollected.reduce((a, b) =>
+        Math.hypot(a.x-e.x,a.y-e.y) < Math.hypot(b.x-e.x,b.y-e.y) ? a : b
+      );
+      const dx = target.x - e.x, dy = target.y - e.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 1) {
+        e.x += (dx / d) * e.spd * dt * 0.5;
+        e.y += (dy / d) * e.spd * dt * 0.5;
+      }
+    }
+    // also do waypoint patrol
+  }
+
+  // Default: patrol waypoints
+  if (!wpts.length) return;
+  const wp = wpts[e.wpIdx % wpts.length];
+  const dx = wp.x - e.x, dy = wp.y - e.y;
+  const d = Math.hypot(dx, dy);
+  const spd = e.spd * (e.spdMult || 1) * dt;
+
+  if (d < spd + 1) {
+    e.x = wp.x;
+    e.y = wp.y;
+    e.wpIdx = (e.wpIdx + 1) % wpts.length;
+    // PONZI: periodically add waypoints to expand
+    if (e.type === 'PONZI') {
+      e.expandTimer = (e.expandTimer || 0) + 1;
+      if (e.expandTimer % 3 === 0 && e.waypoints.length < 8) {
+        e.waypoints.push({
+          x: 40 + Math.random() * (W - 80),
+          y: 40 + Math.random() * (H - 80),
+        });
+      }
+    }
+  } else {
+    e.x += (dx / d) * spd;
+    e.y += (dy / d) * spd;
+  }
+
+  // clamp enemies to canvas
+  e.x = Math.max(ENEMY_R, Math.min(W - ENEMY_R, e.x));
+  e.y = Math.max(ENEMY_R, Math.min(H - ENEMY_R, e.y));
+}
+
+function takeDamage(e) {
+  G.lives--;
+  G.invincible = 90; // ~1.5 seconds
+  G.flashTimer = 0;
+  if (G.lives <= 0) {
+    G.phase = 'dead';
+    showDeath(e.def);
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  // Background
+  drawBackground(G.lvl.theme);
+
+  // Boiler aura
+  G.enemies.filter(e => e.type === 'BOILER').forEach(e => {
+    const r = ENEMY_TYPES.BOILER.aura || 40;
+    const g2 = ctx.createRadialGradient(e.x, e.y, r*0.3, e.x, e.y, r);
+    g2.addColorStop(0, 'rgba(231,76,60,0.25)');
+    g2.addColorStop(1, 'rgba(231,76,60,0)');
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, r, 0, Math.PI*2);
+    ctx.fillStyle = g2;
+    ctx.fill();
+  });
+
+  // Stonks
+  G.stonks.forEach(s => {
+    if (s.collected) return;
+    ctx.save();
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // subtle glow
+    ctx.shadowColor = '#00aaff';
+    ctx.shadowBlur = 6 + Math.sin(G.ticker * 0.08) * 3;
+    ctx.fillText('📊', s.x, s.y);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  });
+
+  // Cat (final level, if enough stonks collected)
+  if (G.lvl.isFinal && G.catPos && G.stonksCollected >= G.lvl.stonksNeeded) {
+    ctx.save();
+    ctx.font = '28px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#00ff41';
+    ctx.shadowBlur = 12 + Math.sin(G.ticker * 0.1) * 6;
+    const bob = Math.sin(G.ticker * 0.06) * 4;
+    ctx.fillText('🐱', G.catPos.x, G.catPos.y + bob);
+    ctx.restore();
+    // indicator arrow
+    ctx.save();
+    ctx.fillStyle = '#00ff41';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('▼ RESCUE', G.catPos.x, G.catPos.y - 22);
+    ctx.restore();
+  }
+
+  // Enemies
+  G.enemies.forEach(e => {
+    ctx.save();
+    ctx.font = '22px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const pulse = Math.sin(G.ticker * 0.12 + e.id) * 2;
+    ctx.shadowColor = e.def.color;
+    ctx.shadowBlur = 8 + pulse;
+    ctx.fillText(e.def.emoji, e.x, e.y);
+    ctx.restore();
+  });
+
+  // Player — bald man emoji (the retail investor)
+  const showPlayer = G.invincible <= 0 || Math.floor(G.flashTimer / 5) % 2 === 0;
+  if (showPlayer) {
+    ctx.save();
+    ctx.font = '22px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = invertTimer > 0 ? '#ff0000' : '#ffffff';
+    ctx.shadowBlur = 10;
+    ctx.fillText('👨‍💼', G.px, G.py); // bald businessman / retail investor
+    ctx.restore();
+  }
+
+  // Inverted controls warning
+  if (invertTimer > 0) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,0,0,0.08)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ff0000';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚠ CONTROLS INVERTED ⚠', W/2, 16);
+    ctx.restore();
+  }
+
+  // Cursor crosshair
+  ctx.save();
+  ctx.strokeStyle = '#000080';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(mouseX - 8, mouseY);
+  ctx.lineTo(mouseX + 8, mouseY);
+  ctx.moveTo(mouseX, mouseY - 8);
+  ctx.lineTo(mouseX, mouseY + 8);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── BACKGROUNDS ───────────────────────────────────────────────
+function drawBackground(theme) {
+  const themes = {
+    office: () => {
+      // Light grey office floor
+      ctx.fillStyle = '#d8d0c8';
+      ctx.fillRect(0, 0, W, H);
+      // Grid lines (carpet tiles)
+      ctx.strokeStyle = '#c4bcb4';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      // desks
+      [[80,60],[300,60],[500,60],[80,240],[300,240],[500,240]].forEach(([x,y]) => {
+        ctx.fillStyle = '#8B7355';
+        ctx.fillRect(x-30,y-15,60,30);
+        ctx.fillStyle = '#6B5335';
+        ctx.fillRect(x-28,y-13,56,26);
+        // monitor
+        ctx.fillStyle = '#222';
+        ctx.fillRect(x-12,y-20,24,18);
+        ctx.fillStyle = '#004488';
+        ctx.fillRect(x-10,y-18,20,14);
+      });
+      label('The Retail Terminal', '#6B5335');
+    },
+    wallst: () => {
+      ctx.fillStyle = '#e8e0d0';
+      ctx.fillRect(0, 0, W, H);
+      // sidewalk tiles
+      ctx.strokeStyle = '#ccc';
+      ctx.lineWidth = 2;
+      for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      // building facades
+      [[0,0,120,H],[500,0,120,H]].forEach(([x,y,w,h]) => {
+        ctx.fillStyle = '#b8b0a0';
+        ctx.fillRect(x,y,w,h);
+        ctx.fillStyle = '#88807a';
+        for (let wy=20; wy<h-20; wy+=30) {
+          for (let wx=x+10; wx<x+w-20; wx+=25) {
+            ctx.fillStyle = '#aaccee';
+            ctx.fillRect(wx,wy,18,18);
+          }
+        }
+      });
+      // street markings
+      ctx.fillStyle = '#d4c88a';
+      ctx.fillRect(130, H/2-8, 340, 16);
+      ctx.fillStyle = '#fff';
+      for (let x=150; x<480; x+=50) { ctx.fillRect(x,H/2-4,30,8); }
+      label('Market Street South', '#443c2c');
+    },
+    bloomberg: () => {
+      ctx.fillStyle = '#0a0a1a';
+      ctx.fillRect(0, 0, W, H);
+      // grid of terminal screens
+      const cols = 7, rows = 4;
+      for (let r=0; r<rows; r++) {
+        for (let c=0; c<cols; c++) {
+          const tx = 20 + c*(W-40)/cols, ty = 20 + r*(H-40)/rows;
+          ctx.fillStyle = '#001100';
+          ctx.fillRect(tx, ty, (W-60)/cols, (H-60)/rows);
+          ctx.strokeStyle = '#003300';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(tx, ty, (W-60)/cols, (H-60)/rows);
+          // fake chart
+          ctx.strokeStyle = '#00ff41';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          const tw = (W-60)/cols - 4, th = (H-60)/rows - 4;
+          for (let i=0; i<tw; i+=4) {
+            const ht = th/2 + Math.sin(i*0.3 + r*c)*th/3;
+            if (i===0) ctx.moveTo(tx+2+i, ty+2+ht);
+            else ctx.lineTo(tx+2+i, ty+2+ht);
+          }
+          ctx.stroke();
+        }
+      }
+      label('Data Floor Alpha', '#00ff41');
+    },
+    basement: () => {
+      ctx.fillStyle = '#2a2018';
+      ctx.fillRect(0, 0, W, H);
+      // concrete floor texture
+      ctx.strokeStyle = '#3a3028';
+      ctx.lineWidth = 1;
+      for (let x=0; x<W; x+=80) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y=0; y<H; y+=80) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      // glowing monitors
+      [[80,80],[200,200],[400,80],[520,200],[310,290]].forEach(([x,y]) => {
+        ctx.fillStyle = '#001a00';
+        ctx.fillRect(x-30,y-20,60,40);
+        ctx.fillStyle = '#002200';
+        ctx.fillRect(x-28,y-18,56,36);
+        // reddit orange glow
+        ctx.fillStyle = 'rgba(255,100,0,0.15)';
+        ctx.fillRect(x-28,y-18,56,36);
+        ctx.fillStyle = '#ff6600';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('r/WSB', x, y+2);
+      });
+      label('Suburban Latency Node', '#888');
+    },
+    brokerage: () => {
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, W, H);
+      // marble floor effect
+      for (let i=0; i<20; i++) {
+        ctx.strokeStyle = `rgba(200,190,220,${0.04 + Math.random()*0.04})`;
+        ctx.lineWidth = Math.random()*3;
+        ctx.beginPath();
+        ctx.moveTo(Math.random()*W, 0);
+        ctx.bezierCurveTo(Math.random()*W, H/3, Math.random()*W, 2*H/3, Math.random()*W, H);
+        ctx.stroke();
+      }
+      // disabled buy button graphic
+      ctx.fillStyle = '#880000';
+      ctx.fillRect(W/2-70, 20, 140, 36);
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(W/2-70, 20, 140, 36);
+      ctx.fillStyle = '#ff4444';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('BUY [DISABLED]', W/2, 43);
+      label('Prime Brokerage Annex', '#9988bb');
+    },
+    clearinghouse: () => {
+      ctx.fillStyle = '#0d1117';
+      ctx.fillRect(0, 0, W, H);
+      // pipes / tubes
+      [[0,80,W,80],[0,170,W,170],[0,260,W,260]].forEach(([x,y,w,h]) => {
+        ctx.strokeStyle = '#1e3a5f';
+        ctx.lineWidth = 20;
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.stroke();
+        ctx.strokeStyle = '#2a5080';
+        ctx.lineWidth = 16;
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.stroke();
+      });
+      // T+2 labels
+      ctx.fillStyle = '#1a3a5f';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('T+2 SETTLEMENT', 10, H-10);
+      label('Clearing House Depths', '#4488bb');
+    },
+    lab: () => {
+      ctx.fillStyle = '#050510';
+      ctx.fillRect(0, 0, W, H);
+      // hex grid
+      ctx.strokeStyle = '#0a0a30';
+      ctx.lineWidth = 1;
+      const size = 30;
+      for (let row=0; row<15; row++) {
+        for (let col=0; col<25; col++) {
+          const hx = col * size * 1.5;
+          const hy = row * size * 1.73 + (col%2) * size * 0.87;
+          ctx.beginPath();
+          for (let i=0; i<6; i++) {
+            const angle = Math.PI/3*i - Math.PI/6;
+            const px = hx + size * Math.cos(angle);
+            const py = hy + size * Math.sin(angle);
+            if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = `rgba(0,100,255,${0.08 + Math.random()*0.04})`;
+          ctx.stroke();
+        }
+      }
+      label('Synthetic Liquidity Lab', '#4444ff');
+    },
+    margincall: () => {
+      // dramatic red/black
+      ctx.fillStyle = '#0a0000';
+      ctx.fillRect(0, 0, W, H);
+      // pulsing red vignette
+      const vg = ctx.createRadialGradient(W/2,H/2,50,W/2,H/2,Math.max(W,H)/2);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, `rgba(180,0,0,${0.3 + Math.sin(G.ticker*0.05)*0.1})`);
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+      // red ticker lines
+      ctx.strokeStyle = '#2a0000';
+      ctx.lineWidth = 1;
+      for (let y=0; y<H; y+=20) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      // danger text
+      ctx.fillStyle = 'rgba(255,0,0,0.06)';
+      ctx.font = 'bold 60px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('MARGIN CALL', W/2, H/2 + 20);
+      label('THE MARGIN CALL', '#ff2200');
+    },
+  };
+  (themes[theme] || themes.office)();
+}
+
+function label(text, color) {
+  ctx.save();
+  ctx.fillStyle = color || '#444';
+  ctx.font = 'bold 11px Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText(text, W-6, H-6);
+  ctx.restore();
+}
+
+// ── HUD ───────────────────────────────────────────────────────
+function updateHUD() {
+  if (!G) return;
+  document.getElementById('status-level').textContent = `${G.lvl.name}`;
+  document.getElementById('status-stonks').textContent = `📊 ${G.stonksCollected} / ${G.lvl.stonksNeeded}`;
+  document.getElementById('status-lives').textContent = '❤️'.repeat(Math.max(0,G.lives));
+  document.getElementById('status-score').textContent = G.score;
+}
+
+// ── OVERLAYS ──────────────────────────────────────────────────
+function hideAllOverlays() {
+  ['overlay-title','overlay-death','overlay-levelwin','overlay-win','overlay-codex']
+    .forEach(id => document.getElementById(id).classList.remove('show'));
+}
+function showOverlay(id) { hideAllOverlays(); document.getElementById(id).classList.add('show'); }
+
+function showDeath(def) {
+  document.getElementById('death-emoji').textContent = def.emoji;
+  document.getElementById('death-title').textContent = def.name.toUpperCase();
+  document.getElementById('death-msg').textContent = def.deathMsg;
+  showOverlay('overlay-death');
+}
+
+function winLevel() {
+  G.phase = 'levelwin';
+  G.score += 500;
+  // unlock next level (sequential — only via winning)
+  if (G.levelIdx + 1 > highestUnlocked) {
+    highestUnlocked = G.levelIdx + 1;
+  }
+  const isLast = G.levelIdx >= LEVELS.length - 1;
+  document.getElementById('levelwin-msg').textContent = isLast
+    ? 'Final level complete. Cat rescued.'
+    : LEVELS[G.levelIdx + 1]
+      ? `Next: ${LEVELS[G.levelIdx + 1].name}`
+      : 'All levels complete!';
+  document.getElementById('levelwin-score').textContent = `Score: ${G.score}`;
+  const btn = document.getElementById('btn-next-level');
+  btn.textContent = isLast ? '🐱 Victory' : '▶ Next Level';
+  btn.disabled = false;
+  showOverlay('overlay-levelwin');
+}
+
+function showWin() {
+  document.getElementById('win-score').textContent = `Final Score: ${G.score}`;
+  showOverlay('overlay-win');
+}
+
+function nextLevel() {
+  const next = G.levelIdx + 1;
+  if (next >= LEVELS.length) { quitToTitle(); return; }
+  if (next > highestUnlocked) { return; } // should not happen, but guard
+  startGame(next);
+}
+
+function restartLevel() { startGame(G.levelIdx); }
+
+function quitToTitle() {
+  if (raf) cancelAnimationFrame(raf);
+  G = null;
+  buildLevelSelect();
+  showOverlay('overlay-title');
+}
+
+// ── LEVEL SELECT ──────────────────────────────────────────────
+function buildLevelSelect() {
+  const container = document.getElementById('level-select-list');
+  container.innerHTML = '';
+  LEVELS.forEach((lvl, i) => {
+    const locked = i > highestUnlocked;
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+    const newTag = lvl.newMechanic ? ENEMY_TYPES[lvl.newMechanic] : null;
+    btn.innerHTML = `
+      <span><strong>${i+1}.</strong> ${lvl.name}</span>
+      <span style="display:flex;align-items:center;gap:6px;">
+        ${newTag ? `<span class="new-mechanic">+${newTag.emoji}</span>` : ''}
+        ${locked ? '<span class="lock">🔒</span>' : '<span class="lock">▶</span>'}
+      </span>
+    `;
+    btn.disabled = locked;
+    btn.title = locked ? 'Beat previous level to unlock' : lvl.subtitle;
+    btn.onclick = () => { selectedLevel = i; startGame(i); };
+    container.appendChild(btn);
+  });
+}
+
+// ── CODEX ─────────────────────────────────────────────────────
+function showCodex() {
+  const content = document.getElementById('codex-content');
+  content.innerHTML = CODEX.map(c => `
+    <div style="display:flex;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #aaa;">
+      <div style="font-size:22px;flex-shrink:0;width:28px;text-align:center;">${c.emoji}</div>
+      <div>
+        <div style="font-weight:bold;color:#000080;">${c.name}</div>
+        <div style="font-size:10px;color:#800000;margin-bottom:2px;">${c.mech}</div>
+        <div style="font-size:11px;line-height:1.4;color:#333;">${c.lore}</div>
+      </div>
+    </div>
+  `).join('');
+  hideAllOverlays();
+  document.getElementById('overlay-codex').classList.add('show');
+}
+
+function hideCodex() {
+  document.getElementById('overlay-codex').classList.remove('show');
+  if (!G || G.phase !== 'playing') showOverlay('overlay-title');
+}
+
+// ── BOOT ──────────────────────────────────────────────────────
+buildLevelSelect();
+showOverlay('overlay-title');
+// start the render loop idle (just shows title BG)
+function idleLoop(ts) {
+  if (!G) {
+    ctx.fillStyle = '#008080';
+    ctx.fillRect(0, 0, W, H);
+    // draw some idle stonks floating
+    const t = ts * 0.001;
+    for (let i=0; i<8; i++) {
+      const x = (Math.sin(t * 0.3 + i * 1.2) * 0.4 + 0.5) * W;
+      const y = (Math.cos(t * 0.2 + i * 0.9) * 0.4 + 0.5) * H;
+      ctx.font = '20px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('📊', x, y);
+    }
+  }
+  requestAnimationFrame(idleLoop);
+}
+requestAnimationFrame(idleLoop);
+</script>
+</body>
+</html>
